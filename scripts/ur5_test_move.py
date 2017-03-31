@@ -8,6 +8,10 @@ from trajectory_msgs.msg import *
 from sensor_msgs.msg import JointState
 from math import pi
 
+"""
+Test wrapper for UR5 robotic arm
+"""
+
 class Arm():
     def __init__(self):
         rospy.init_node("test_move", anonymous=True, disable_signals=True)
