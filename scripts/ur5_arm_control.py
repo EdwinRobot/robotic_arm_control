@@ -17,7 +17,7 @@ Before this, the UR driver needs to be brought online
 rosrun ur_modern_driver ur5_bringup.launch robot_ip:=10.253.0.51
 """
 
-def rad2pi(self, joint_states):
+def rad2pi(joint_states):
     """control tablet reads in joint positions in degrees
     JointTrajectoryPoint is in radians. we can define as either, but this will convert to radians"""
     return [(j*pi/180) for j in joint_states]
@@ -70,11 +70,12 @@ class Arm():
 
             #Initialize trajectory with current position of robot
             g.trajectory.points = [JointTrajectoryPoint(positions=joints_pos, velocities=[0]*6, time_from_start=rospy.Duration(0.0))]
+            duration = 0
 
             #Add each gesture from the dictionary to the trajectory
-            for g in gest2run:
-                g.trajectory.points.append(
-                    JointTrajectoryPoint(positions=rad2pi(g[0]), velocities=[0]*6, time_from_start=rospy.Duration(g[1])))
+            for gest in gest2run:
+                duration += gest[1]
+                g.trajectory.points.append(JointTrajectoryPoint(positions=rad2pi(gest[0]), velocities=[0]*6, time_from_start=rospy.Duration(duration)))
 
             #Send trajectory to arm
             print "Goal created, sending."
@@ -89,6 +90,13 @@ class Arm():
         except:
             raise
 
+    def move_to_point(self, point):
+        """
+        Creates trajectory to a single point
+        """
+        #TODO: implement
+        pass
+
     def home_robot(self):
         g = FollowJointTrajectoryGoal()
         g.trajectory = JointTrajectory()
@@ -102,7 +110,7 @@ class Arm():
 
             #Add HOME position
             g.trajectory.points.append(
-                JointTrajectoryPoint(positions=rad2pi(self.HOME), velocities=[0]*6, time_from_start=rospy.Duration(2)))
+                JointTrajectoryPoint(positions=rad2pi(self.HOME), velocities=[0]*6, time_from_start=rospy.Duration(3)))
 
             #Send trajectory to arm
             print "Goal created, sending."
