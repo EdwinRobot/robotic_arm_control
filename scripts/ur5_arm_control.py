@@ -7,6 +7,7 @@ from control_msgs.msg import *
 from trajectory_msgs.msg import *
 from sensor_msgs.msg import JointState
 from math import pi
+from namedlist import namedlist
 
 """
 Wrapper for UR5 robotic arm
@@ -16,6 +17,8 @@ Before this, the UR driver needs to be brought online
 
 rosrun ur_modern_driver ur5_bringup.launch robot_ip:=10.253.0.51
 """
+
+Route = namedlist('Route', 'joints duration')
 
 def rad2pi(joint_states):
     """control tablet reads in joint positions in degrees
@@ -48,53 +51,14 @@ class Arm():
         self.gestures = {}
         self.build_gesture_dict()
 
-    def build_gesture_dict(self):
-        """
-        Gesture dictionary for UR arm
-        format is
-        [([JOINT_POSITIONS], GEST_DURATION), etc]
-        """
-        self.gestures["dance"] = [([83, -128, 40.75, 45,0,0], 2), ([83, -38, -50, 176.4, 0,0],2)]
-
-    def run_gesture(self, gesture):
-        """
-        Runs a gesture based on what it finds in the dictionary
-        """
-        gest2run = self.gestures[gesture]
-        g = FollowJointTrajectoryGoal()
-        g.trajectory = JointTrajectory()
-        g.trajectory.joint_names = self.JOINT_NAMES
-        try:
-            joint_states = rospy.wait_for_message("joint_states", JointState)
-            joints_pos = joint_states.position
-
-            #Initialize trajectory with current position of robot
-            g.trajectory.points = [JointTrajectoryPoint(positions=joints_pos, velocities=[0]*6, time_from_start=rospy.Duration(0.0))]
-            duration = 0
-
-            #Add each gesture from the dictionary to the trajectory
-            for gest in gest2run:
-                duration += gest[1]
-                g.trajectory.points.append(JointTrajectoryPoint(positions=rad2pi(gest[0]), velocities=[0]*6, time_from_start=rospy.Duration(duration)))
-
-            #Send trajectory to arm
-            print "Goal created, sending."
-            self.client.send_goal(g)
-            print "Waiting for result"
-            self.client.wait_for_result()
-            print "Gesture completed succesfully"
-
-        except KeyboardInterrupt:
-            self.client.cancel_goal()
-            raise
-        except:
-            raise
-
     def move_to_point(self, point):
         """
         Creates trajectory to a single point
         """
+
         #TODO: implement
+        #implementing this will require looking into UR TCP documentation
+        #cannot be done until new head is installed
         pass
 
     def home_robot(self):
@@ -125,11 +89,149 @@ class Arm():
         except:
             raise
 
+    def build_gesture_dict(self):
+        """
+        Gesture dictionary for UR arm
+        """
+        self.gestures["dance"] = [Route([83, -128, 40.75, 45,0,0], 2), Route([83, -38, -50, 176.4, 0,0],2)]
+        # self.gestures["touch_head"] = []
+        # self.gestures["high5_self"] = []
+        # self.gestures["dab"] = []
+        self.gestures["starfish"] = [Route([0, -46, -129, -34.22, 91.68, 0], 3), Route([0,-90,0,-0.33,87.45,0], 1)]
+        self.gestures["bow"] = [Route(self.HOME, 1.5), Route([0,-91, -98, -89, 88, 0], 3), Route(self.HOME, 2)]
+        self.gestures["heart"] = [Route([-7.65,-73.45,-100,-38,91.69,0],2), Route([-49,-85,-77,-35,112,0],1),
+                                    Route([-39.5,-96.7,-90,-12.5,127,0],1), Route([-14.4, -103.7, -109, 32, 92.6,0],1),
+                                    Route([-7.65,-73.45,-100,-38,91.69,0],2), Route([33.5, -75, -95.5, -38, 38, 0],1),
+                                    Route([38,-75.5,-115,4.5,38.56,0],1), Route([-14.4, -103.7, -109, 32, 92.6,0],2)]
+        self.gestures["wave"] = [Route([96,-90,69.6,-76,0,0], 2), Route([-96,-91,33,-37,0,0], 2), 2]
+        self.gestures["disco"] = [Route([54.63, -97.26, -141.53, -21, 28, 87.8], 2), Route([-1.62, -55.72, -125.98, -4.38, 90.59, 0], 1.5),
+                                Route([-63.46, -112, -21, -71.6, 110, 0], 1.5), Route([-1.62, -55.72, -125.98, -4.38, 90.59, 0], 2), 2]
+        # self.gestures["rub_tummy"] = []
+
+    def run_gesture_incremental(self, gesture):
+        """
+        Runs a gesture based on what it finds in the dictionary
+        Increments, so requires user input to move from keypose to keypose
+        """
+
+        gest2run = self.gestures[gesture]
+        if type(gest2run[-1]) == int:
+            repeat_num = gest2run[-1]
+            gest2run.pop(-1)
+        else:
+            repeat_num = 1
+        g = FollowJointTrajectoryGoal()
+        try:
+            #Add each gesture from the dictionary to the trajectory
+            for gest in gest2run:
+                if type(gest) == str:
+                    cmd = gest.split(":")[0]
+                    val = gest.split(":")[1]
+
+                    if cmd == "SLEEP":
+                        time.sleep(float(val))
+                    continue
+
+                g = FollowJointTrajectoryGoal()
+                cur_joint_states = rospy.wait_for_message("joint_states", JointState)
+                g.trajectory = JointTrajectory()
+                g.trajectory.joint_names = self.JOINT_NAMES
+
+                #Initialize trajectory with current position of robot
+                g.trajectory.points = [JointTrajectoryPoint(positions=cur_joint_states.position, velocities=[0]*6, time_from_start=rospy.Duration(0.0))]
+                g.trajectory.joint_names = self.JOINT_NAMES
+
+                assert len(gest.joints) == 6
+                g.trajectory.points.append(JointTrajectoryPoint(positions=rad2pi(gest.joints), velocities=[0]*6, time_from_start=rospy.Duration(gest.duration)))
+
+                #Send trajectory to arm
+                print "Goal created, sending."
+                self.client.send_goal(g)
+                print "Waiting for result"
+                self.client.wait_for_result()
+                # print "Gesture completed, do next move?"
+                inp = raw_input("Ready for next move?")
+
+                if (inp == "n"):
+                    raise KeyboardInterrupt
+
+        except KeyboardInterrupt:
+            self.client.cancel_goal()
+            raise
+
+        except AssertionError:
+            print "RUNNING: ", gest.joints
+            print "WRONG LENGTH OF JOINTS: GOT %d, EXPECTED 6" % (len(gest.joints))
+            raise
+
+    def run_gesture(self, gesture):
+        """
+        Runs a gesture based on what it finds in the dictionary
+        """
+        gest2run = self.gestures[gesture]
+        if type(gest2run[-1]) == int:
+            repeat_num = gest2run[-1]
+            gest2run.pop(-1)
+        else:
+            repeat_num = 1
+
+        g = FollowJointTrajectoryGoal()
+        joint_states = rospy.wait_for_message("joint_states", JointState)
+        g.trajectory = JointTrajectory()
+        g.trajectory.joint_names = self.JOINT_NAMES
+        try:
+            joints_pos = joint_states.position
+
+            #Initialize trajectory with current position of robot
+            g.trajectory.points = [JointTrajectoryPoint(positions=joints_pos, velocities=[0]*6, time_from_start=rospy.Duration(0.0))]
+            duration = 0
+
+            for repeat in range(repeat_num):
+                #Add each gesture from the dictionary to the trajectory
+                for gest in gest2run:
+                    duration += gest.duration
+                    if len(gest.joints) == 6:
+                        g.trajectory.points.append(JointTrajectoryPoint(positions=rad2pi(gest.joints), velocities=[0]*6, time_from_start=rospy.Duration(duration)))
+                    else:
+                        print gest.joints
+                        print "WRONG LENGTH: GOT %d, EXPECTED 6" % (len(gest.joints))
+                        raise TypeError
+
+            #Send trajectory to arm
+            print "Goal created, sending."
+            self.client.send_goal(g)
+            print "Waiting for result"
+            self.client.wait_for_result()
+            print "Gesture completed succesfully"
+
+        except KeyboardInterrupt:
+            self.client.cancel_goal()
+            raise
+        except:
+            raise
+
+    def test_run(self):
+        try:
+            inp = raw_input("Ready to run? y/n: ")[0]
+            if (inp == 'y'):
+                self.run_gesture_incremental("wave")
+            else:
+                print "Halting program"
+        except KeyboardInterrupt:
+            rospy.signal_shutdown("KeyboardInterrupt")
+            raise
+
     def run(self):
         try:
             inp = raw_input("Ready to run? y/n: ")[0]
             if (inp == 'y'):
-                self.run_gesture("dance")
+                # self.home_robot()
+                # self.run_gesture("starfish")
+                # self.run_gesture("disco")
+                # self.run_gesture("bow")
+                # self.run_gesture("heart")
+                self.run_gesture("wave")
+                # pass
             else:
                 print "Halting program"
         except KeyboardInterrupt:
@@ -139,3 +241,4 @@ class Arm():
 if __name__ == '__main__':
     a = Arm()
     a.run()
+    # a.test_run()
