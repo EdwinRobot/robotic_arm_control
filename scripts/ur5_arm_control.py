@@ -45,7 +45,7 @@ class Arm():
                 self.JOINT_NAMES[i] = prefix + name
 
         #HOME position of the arm
-        self.HOME = [0,-90,0,-90,0,0]
+        self.HOME = [0,-90,0,-90,90,30]
 
         #Gesture dictionary, and buliding it
         self.gestures = {}
@@ -94,19 +94,33 @@ class Arm():
         Gesture dictionary for UR arm
         """
         self.gestures["dance"] = [Route([83, -128, 40.75, 45,0,0], 2), Route([83, -38, -50, 176.4, 0,0],2)]
-        # self.gestures["touch_head"] = []
-        # self.gestures["high5_self"] = []
-        # self.gestures["dab"] = []
-        self.gestures["starfish"] = [Route([0, -46, -129, -34.22, 91.68, 0], 3), Route([0,-90,0,-0.33,87.45,0], 1)]
-        self.gestures["bow"] = [Route(self.HOME, 1.5), Route([0,-91, -98, -89, 88, 0], 3), Route(self.HOME, 2)]
-        self.gestures["heart"] = [Route([-7.65,-73.45,-100,-38,91.69,0],2), Route([-49,-85,-77,-35,112,0],1),
-                                    Route([-39.5,-96.7,-90,-12.5,127,0],1), Route([-14.4, -103.7, -109, 32, 92.6,0],1),
-                                    Route([-7.65,-73.45,-100,-38,91.69,0],2), Route([33.5, -75, -95.5, -38, 38, 0],1),
-                                    Route([38,-75.5,-115,4.5,38.56,0],1), Route([-14.4, -103.7, -109, 32, 92.6,0],2)]
-        self.gestures["wave"] = [Route([96,-90,69.6,-76,0,0], 2), Route([-96,-91,33,-37,0,0], 2), 2]
-        self.gestures["disco"] = [Route([54.63, -97.26, -141.53, -21, 28, 87.8], 2), Route([-1.62, -55.72, -125.98, -4.38, 90.59, 0], 1.5),
-                                Route([-63.46, -112, -21, -71.6, 110, 0], 1.5), Route([-1.62, -55.72, -125.98, -4.38, 90.59, 0], 2), 2]
-        # self.gestures["rub_tummy"] = []
+        self.gestures["touch_head"] = [Route([-85, -82, -40, -90, 90, 41], 2), Route([-85, -106, -117, -130, 90, 41], 3),
+                                    Route([-85, -105, -117, -115, 90, 41], 0.5), Route([-85, -106, -117, -130, 90, 41], 0.5),
+                                    Route([-85, -105, -117, -115, 90, 41], 0.5), Route([-85, -106, -117, -130, 90, 41], 0.5),
+                                    Route([-85, -82, -40, -90, 90, 41], 2)]
+        self.gestures["clap_left"] = [Route([-90, -84, -20.22, -89.94, 90, 52.43],2), Route([-90, -78.18, -118, -128.68, 89.97, 52.4], 4),
+                                    Route([-90, -78, -125.85, -153, 89.98, 52.44], 0.5), Route([-90, -78.18, -118, -128.68, 89.97, 52.4], 0.5),
+                                    Route([-90, -84, -20.22, -89.94, 90, 52.43],2)]
+        self.gestures["dab"] = [Route([0,-65, -82, -43, 90, 41], 2), Route([-64, -96, -96, -42, 125, -38], 1.2),
+                                Route([0,-65, -82, -43, 90, 41], 2)]
+        self.gestures["starfish"] = [Route([0, -46, -129.13, -49.96, 91.68, 44.96], 3), Route([0,-90,0,-0.33,87.45,44.96], 1), Route(self.HOME, 2)]
+        self.gestures["bow"] = [Route(self.HOME, 1.5), Route([0,-91, -98, -40, 88, 42], 3), Route(self.HOME, 2)]
+        self.gestures["heart"] = [Route([-7.65,-73.45,-100,-18,91.69,37],2), Route([-49,-85,-77,-22,87,33],1),
+                                    Route([-39.5,-96.7,-90,-28,127,42],1), Route([-12, -90, -124, -3, 92, 38.8],1),
+                                    Route([38,-75.5,-124,12.36,58,37],1), Route([33.5, -75, -95.5, -15, 54, 26],1),
+                                    Route([-7.65,-73.45,-100,-18,91.69,37],1)]
+        self.gestures["wave"] = [Route([0,-65, -100, 18, 88, 42], 1),
+                                Route([0, -74, -115, -37, 86, 42], 1), Route([0,-65, -100, 18, 88, 42], 1),
+                                Route([0, -65, -111, -10, 88, 42], 1)]
+        self.gestures["disco"] = [Route([-7.65,-73.45,-100,-18,91.69,37],2), Route([54.63, -104.26, -137.37, 17, 98, 51], 1.5),
+                                Route([-1.62, -55.72, -125.98, -4.38, 90.59, 37], 1.5), Route([-63.46, -117, -17, 11, 88, 36], 1.5),
+                                Route([-1.62, -55.72, -125.98, -4.38, 90.59, 37], 1.5), Route([54.63, -104.26, -137.37, 17, 98, 51], 1.5),
+                                Route([-1.62, -55.72, -125.98, -4.38, 90.59, 37], 1.5), Route([-63.46, -117, -17, 11, 88, 36], 1.5),
+                                Route([-1.62, -55.72, -125.98, -4.38, 90.59, 37], 1.5)]
+        self.gestures["rub_tummy"] = [Route([-84, -84.9, -30, -81, 89.96, 47.99], 2), Route([-84.5, -75.6, -124, -134.8, 89.96, 47.99], 4),
+                                Route([-84, -75.6, -124, -160, 89.96, 47.99], 0.5), Route([-84.5, -75.6, -124, -134.8, 89.96, 47.99], 0.5),
+                                Route([-84, -75.6, -124, -160, 89.96, 47.99], 0.5),
+                                Route([-84, -84.9, -30, -81, 89.96, 47.99], 2)]
 
     def run_gesture_incremental(self, gesture):
         """
@@ -210,11 +224,31 @@ class Arm():
         except:
             raise
 
-    def test_run(self):
+    def test_run(self, gesture):
         try:
             inp = raw_input("Ready to run? y/n: ")[0]
             if (inp == 'y'):
-                self.run_gesture_incremental("wave")
+                self.run_gesture_incremental(gesture)
+            else:
+                print "Halting program"
+        except KeyboardInterrupt:
+            rospy.signal_shutdown("KeyboardInterrupt")
+            raise
+
+    def run_all(self):
+        try:
+            inp = raw_input("Ready to run? y/n: ")[0]
+            if (inp == 'y'):
+                self.run_gesture("bow")
+                self.run_gesture("starfish")
+                self.run_gesture("disco")
+                self.run_gesture("heart")
+                self.run_gesture("wave")
+                self.run_gesture("dab")
+                self.run_gesture("touch_head")
+                self.run_gesture("rub_tummy")
+                self.run_gesture("clap_left")
+                self.home_robot()
             else:
                 print "Halting program"
         except KeyboardInterrupt:
@@ -222,23 +256,13 @@ class Arm():
             raise
 
     def run(self):
-        try:
-            inp = raw_input("Ready to run? y/n: ")[0]
-            if (inp == 'y'):
-                # self.home_robot()
-                # self.run_gesture("starfish")
-                # self.run_gesture("disco")
-                # self.run_gesture("bow")
-                # self.run_gesture("heart")
-                self.run_gesture("wave")
-                # pass
-            else:
-                print "Halting program"
-        except KeyboardInterrupt:
-            rospy.signal_shutdown("KeyboardInterrupt")
-            raise
+        print "UR5 control is running"
+        r = rospy.Rate(10)
+
+        while not rospy.is_shutdown():
+            r.sleep()
 
 if __name__ == '__main__':
     a = Arm()
     a.run()
-    # a.test_run()
+    # a.test_run("clap_left")
